@@ -75,9 +75,10 @@ RUN	openssl req -new -x509 -days 1095 -nodes \
 #RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
 #ENV NOTVISIBLE "in users profile"
 #RUN echo "export VISIBLE=now" >> /etc/profile
-## Script que uso a menudo durante debug
-#RUN echo "grep -vh '^[[:space:]]*#' \"\$@\" | grep -v '^//' | grep -v '^;' | grep -v '^\$' | grep -v '^\!' | grep -v '^--'" > /usr/bin/confcat
-#RUN chmod 755 /usr/bin/confcat
+
+## Script que uso a menudo durante las pruebas
+RUN echo "grep -vh '^[[:space:]]*#' \"\$@\" | grep -v '^//' | grep -v '^;' | grep -v '^\$' | grep -v '^\!' | grep -v '^--'" > /usr/bin/confcat
+RUN chmod 755 /usr/bin/confcat
 
 #-----------------------------------------------------------------------------------
 

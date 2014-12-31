@@ -88,11 +88,18 @@ fi
 
 ##################################################################
 #
-# Usuario/Grupo "vmail"
-# Owner directorio donde residen los mails recibidos
+# Usuario/Grupo "vmail" - owner directorio donde residen los mails 
+# recibidos vía el contendor postfix o leídos desde el contenedor
+# courier-imap. 
+#
+# En ambos contenedores (postfix y courier-imap) debo montar el 
+# directorio externo persistente elegido para dejar los mails. 
+#
 # run: -v /Apps/data/vmail:/data/vmail
-# UID/GID el que queramos, debe coincidir con el que usemos en 
-# otros contenedores que accedan a dicho directorio persistente
+#
+# Además debo tener el mismo usuario como propietario de dicha 
+# estructura de directorios, así que en ambos contenedores de 
+# postfix y courier-imap creo el usuario vmail con mismo UID/GID
 #
 ##################################################################
 ret=false
@@ -189,10 +196,7 @@ EOF
 	#
     # Servidor SMTP en 25,2525 y SMTPS en 465"
 	# ==============
-    postconf -M smtp/inet="smtp       inet  n       -       n       -       -       smtpd"    
-	postconf -P smtp/inet/smtpd_sasl_auth_enable=yes
-	postconf -P smtp/inet/smtpd_client_restrictions=permit_sasl_authenticated,reject
-
+    postconf -M smtp/inet="smtp       inet  n       -       n       -       -       smtpd"
     postconf -M 2525/inet="2525       inet  n       -       n       -       -       smtpd"    
 	postconf -P 2525/inet/smtpd_sasl_auth_enable=yes
 	postconf -P 2525/inet/smtpd_client_restrictions=permit_sasl_authenticated,reject
@@ -246,7 +250,7 @@ EOF
 	postconf -e mydomain=${SERVICE_MYDOMAIN}
 	postconf -e mydestination="\$myhostname, localhost.\$mydomain, localhost"
 	postconf -e mynetworks="192.168.1.0/24, 172.16.0.0/12, 127.0.0.0/8"
-	postconf -e home_mailbox=".maildir/"
+	postconf -e home_mailbox="Maildir/"
 	postconf -e inet_protocols=ipv4
 	
 	# SASL
@@ -256,7 +260,7 @@ EOF
 	postconf -e broken_sasl_auth_clients=yes
 	postconf -e smtpd_sasl_local_domain=
 	postconf -e smtpd_recipient_restrictions="permit_sasl_authenticated, permit_mynetworks, reject_unauth_destination"
-
+    
 	# TLS/SSL
 	postconf -e smtp_use_tls=yes
 	postconf -e smtp_tls_note_starttls_offer=yes
@@ -300,6 +304,7 @@ EOF
 	postconf -e virtual_mailbox_maps=proxy:mysql:/etc/postfix/mysql_virtual_mailbox_maps.cf
 	postconf -e virtual_transport=virtual
 
+	postconf -e relay_domains="luispa.com, parchis.org"
 
 	############
 	#
@@ -404,9 +409,12 @@ EOFMAILBOXMAPS
 
 # Activar para debug interactivo
 #
-# *.* /var/log/syslog
+#*.* /var/log/syslog
 
 EOFRSYSLOG
+
+	# Re-Confirmo los permisos de /data/vmail
+	chown -R vmail:vmail /data/vmail
 
     #
     # Creo el fichero de control para que el resto de 
@@ -414,9 +422,6 @@ EOFRSYSLOG
     > ${CONFIG_DONE}
 
 fi
-
-# Confirmo los permisos de /data/vmail
-chown -R vmail:vmail /data/vmail
 
 
 ##################################################################
