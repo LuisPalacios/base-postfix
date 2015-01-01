@@ -304,8 +304,6 @@ EOF
 	postconf -e virtual_mailbox_maps=proxy:mysql:/etc/postfix/mysql_virtual_mailbox_maps.cf
 	postconf -e virtual_transport=virtual
 
-	postconf -e relay_domains="luispa.com, parchis.org"
-
 	############
 	#
 	# aliases

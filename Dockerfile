@@ -76,7 +76,7 @@ RUN	openssl req -new -x509 -days 1095 -nodes \
 #ENV NOTVISIBLE "in users profile"
 #RUN echo "export VISIBLE=now" >> /etc/profile
 
-## Script que uso a menudo durante las pruebas
+## Script que uso a menudo durante las pruebas. Es como "cat" pero elimina líneas de comentarios
 RUN echo "grep -vh '^[[:space:]]*#' \"\$@\" | grep -v '^//' | grep -v '^;' | grep -v '^\$' | grep -v '^\!' | grep -v '^--'" > /usr/bin/confcat
 RUN chmod 755 /usr/bin/confcat
 
