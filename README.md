@@ -5,7 +5,8 @@ Este repositorio alberga un *contenedor Docker* para montar Postfix, está autom
 
 ## Ficheros
 
-* **Dockerfile**: Para crear la base de un servicio Postfix
+* **Dockerfile**: Para crear la base de servicio.
+* **do.sh**: Para arrancar el contenedor creado con esta imagen.
 
 ## Instalación de la imagen
 

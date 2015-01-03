@@ -57,7 +57,7 @@ RUN apt-get update && apt-get install -y -q postfix \
 RUN	openssl req -new -x509 -days 1095 -nodes \
 			-out /etc/ssl/certs/postfix.pem  \
 			-keyout /etc/ssl/private/postfix.key \
-			-subj "/C=ES/ST=Madrid/L=Villanueva del Pardillo/O=Parchis/CN=smtp.parchis.org"
+			-subj "/C=ES/ST=Madrid/L=Mi querido pueblo/O=Org/CN=localhost"
 
 # ------- ------- ------- ------- ------- ------- -------
 # DEBUG ( Descomentar durante debug del contenedor )
