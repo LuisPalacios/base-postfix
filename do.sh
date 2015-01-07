@@ -136,56 +136,65 @@ if [ ${NECESITA_PRIMER_CONFIG} = "si" ] ; then
 	# Supervisor
 	# 
 	############
-	cat > /etc/supervisor/conf.d/supervisord.conf <<EOF
-[unix_http_server]
-file=/var/run/supervisor.sock 					; path to your socket file
+	
+	### 
+	### INICIO FICHERO  /etc/supervisor/conf.d/supervisord.conf
+	### ------------------------------------------------------------------------------------------------
+	cat > /etc/supervisor/conf.d/supervisord.conf <<-EOF_SUPERVISOR
+	
+	[unix_http_server]
+	file=/var/run/supervisor.sock 					; path to your socket file
+	
+	[inet_http_server]
+	port = 0.0.0.0:9001								; allow to connect from web browser
+	
+	[supervisord]
+	logfile=/var/log/supervisor/supervisord.log 	; supervisord log file
+	logfile_maxbytes=50MB 							; maximum size of logfile before rotation
+	logfile_backups=10 								; number of backed up logfiles
+	loglevel=error 									; info, debug, warn, trace
+	pidfile=/var/run/supervisord.pid 				; pidfile location
+	minfds=1024 									; number of startup file descriptors
+	minprocs=200 									; number of process descriptors
+	user=root 										; default user
+	childlogdir=/var/log/supervisor/ 				; where child log files will live
+	
+	nodaemon=false 									; run supervisord as a daemon when debugging
+	;nodaemon=true 									; run supervisord interactively
+	 
+	[rpcinterface:supervisor]
+	supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
+	 
+	[supervisorctl]
+	serverurl=unix:///var/run/supervisor.sock		; use a unix:// URL for a unix socket 
+	
+	[program:postfix]
+	process_name = master
+	directory = /etc/postfix
+	command = /usr/sbin/postfix -c /etc/postfix start
+	startsecs = 0
+	autorestart = false
+	
+	[program:rsyslog]
+	process_name = rsyslogd
+	command=/usr/sbin/rsyslogd -n
+	startsecs = 0
+	autorestart = true
+	
+	#
+	# DESCOMENTAR PARA DEBUG o SI QUIERES SSHD
+	#
+	#[program:sshd]
+	#process_name = sshd
+	#command=/usr/sbin/sshd -D
+	#startsecs = 0
+	#autorestart = true
+	
+	EOF_SUPERVISOR
+	### ------------------------------------------------------------------------------------------------
+	### FIN FICHERO /etc/supervisor/conf.d/supervisord.conf  
+	### 
 
-[inet_http_server]
-port = 0.0.0.0:9001								; allow to connect from web browser
-
-[supervisord]
-logfile=/var/log/supervisor/supervisord.log 	; supervisord log file
-logfile_maxbytes=50MB 							; maximum size of logfile before rotation
-logfile_backups=10 								; number of backed up logfiles
-loglevel=error 									; info, debug, warn, trace
-pidfile=/var/run/supervisord.pid 				; pidfile location
-minfds=1024 									; number of startup file descriptors
-minprocs=200 									; number of process descriptors
-user=root 										; default user
-childlogdir=/var/log/supervisor/ 				; where child log files will live
-
-nodaemon=false 									; run supervisord as a daemon when debugging
-;nodaemon=true 									; run supervisord interactively
- 
-[rpcinterface:supervisor]
-supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
- 
-[supervisorctl]
-serverurl=unix:///var/run/supervisor.sock		; use a unix:// URL for a unix socket 
-
-[program:postfix]
-process_name = master
-directory = /etc/postfix
-command = /usr/sbin/postfix -c /etc/postfix start
-startsecs = 0
-autorestart = false
-
-[program:rsyslog]
-process_name = rsyslogd
-command=/usr/sbin/rsyslogd -n
-startsecs = 0
-autorestart = true
-
-#
-# DESCOMENTAR PARA DEBUG o SI QUIERES SSHD
-#
-#[program:sshd]
-#process_name = sshd
-#command=/usr/sbin/sshd -D
-#startsecs = 0
-#autorestart = true
-
-EOF
 
 
 	#####################
@@ -194,16 +203,21 @@ EOF
     #
 	#####################
 	#
-    # Servidor SMTP en 25,2525 y SMTPS en 465"
-	# ==============
+    # Servidor SMTP en 25,2525. 
+    # Nota: Los clientes podrán autenticar por el puerto 25 y 2525, usando STARTTLS (ver main.cf)
+    # ==============
     postconf -M smtp/inet="smtp       inet  n       -       n       -       -       smtpd"
     postconf -M 2525/inet="2525       inet  n       -       n       -       -       smtpd"    
 	postconf -P 2525/inet/smtpd_sasl_auth_enable=yes
 	postconf -P 2525/inet/smtpd_client_restrictions=permit_sasl_authenticated,reject
 
-    postconf -M smtps/inet="smtps     inet  n       -       n       -       -       smtpd"
-	postconf -P smtps/inet/smtpd_sasl_auth_enable=yes
-	postconf -P smtps/inet/smtpd_client_restrictions=permit_sasl_authenticated,reject
+    # Servidor SMTPS en puerto 465 desactivado !!!!. De hecho en el año 1998 el IANA 
+    # revocó la asignación del puerto 465 a SMTPS, cuando se introdujo STARTTLS. 
+    # Conclusión: Desactivo SMTPS para que no se use SSL2/SSL3, simplemente "NO" ejecuto
+    # los tres comandos siguientes, que lo activarían.
+    #postconf -M smtps/inet="smtps     inet  n       -       n       -       -       smtpd"
+	#postconf -P smtps/inet/smtpd_sasl_auth_enable=yes
+	#postconf -P smtps/inet/smtpd_client_restrictions=permit_sasl_authenticated,reject
   
     # Amavisd-new -- "Cliente SMTP por 10024 y Servidor SMTP en 10025"    
 	# ===========
@@ -240,6 +254,8 @@ EOF
 	postconf -P 10025/inet/local_recipient_maps=
 	postconf -P 10025/inet/relay_recipient_maps=
 
+
+
 	#####################
     #
     # postfix / main.cf 
@@ -262,6 +278,7 @@ EOF
 	postconf -e smtpd_recipient_restrictions="permit_sasl_authenticated, permit_mynetworks, reject_unauth_destination"
     
 	# TLS/SSL
+	postconf -e smtpd_tls_mandatory_protocols=!SSLv2,!SSLv3
 	postconf -e smtp_use_tls=yes
 	postconf -e smtp_tls_note_starttls_offer=yes
 	postconf -e smtpd_use_tls=yes
@@ -304,6 +321,8 @@ EOF
 	postconf -e virtual_mailbox_maps=proxy:mysql:/etc/postfix/mysql_virtual_mailbox_maps.cf
 	postconf -e virtual_transport=virtual
 
+
+
 	############
 	#
 	# aliases
@@ -313,53 +332,90 @@ EOF
 	echo "luis:    ${SERVICE_POSTMASTER}" >> /etc/aliases
     /usr/bin/newaliases
 
+
+
 	############
 	#
 	# SASL via SQL
 	#
 	############
-	cat > /etc/postfix/sasl/smtpd.conf <<EOFSMTPCONF
-    pwcheck_method: auxprop
-    auxprop_plugin: sql
-    sql_engine: mysql
-    mech_list: PLAIN LOGIN CRAM-MD5 DIGEST-MD5 NTLM
-    sql_hostnames: ${mysqlHost}:${mysqlPort}
-    sql_user: ${MAIL_DB_USER}
-    sql_passwd: ${MAIL_DB_PASS}
-    sql_database: ${MAIL_DB_NAME}
-    sql_select: SELECT password FROM mailbox WHERE username='%u@%r' AND active = '1'
-    allowanonymouslogin: no
+
+	### 
+	### INICIO FICHERO /etc/postfix/sasl/smtpd.conf  
+	### ------------------------------------------------------------------------------------------------
+	cat > /etc/postfix/sasl/smtpd.conf <<-EOF_SMTPCONF
+
+	pwcheck_method: auxprop
+	auxprop_plugin: sql
+	sql_engine: mysql
+	mech_list: PLAIN LOGIN CRAM-MD5 DIGEST-MD5 NTLM
+	sql_hostnames: ${mysqlHost}:${mysqlPort}
+	sql_user: ${MAIL_DB_USER}
+	sql_passwd: ${MAIL_DB_PASS}
+	sql_database: ${MAIL_DB_NAME}
+	sql_select: SELECT password FROM mailbox WHERE username='%u@%r' AND active = '1'
+	allowanonymouslogin: no
 	allowplaintext: yes
-EOFSMTPCONF
+	
+	EOF_SMTPCONF
+	### ------------------------------------------------------------------------------------------------
+	### FIN FICHERO /etc/postfix/sasl/smtpd.conf  
+	### 
+
 
 	############
 	#
 	# Conexión de Postfix con Mysql
 	#
 	############
-	cat > /etc/postfix/mysql_virtual_alias_maps.cf <<EOFALIASMAPS	
-hosts                 = ${mysqlHost}:${mysqlPort}
-user                  = ${MAIL_DB_USER}
-password              = ${MAIL_DB_PASS}
-dbname                = ${MAIL_DB_NAME}
-query                 = SELECT goto FROM alias WHERE address='%s' AND active = '1'
-EOFALIASMAPS
 
-	cat > /etc/postfix/mysql_virtual_domains_maps.cf <<EOFDOMAINSMAPS
-hosts                 = ${mysqlHost}:${mysqlPort}
-user                  = ${MAIL_DB_USER}
-password              = ${MAIL_DB_PASS}
-dbname                = ${MAIL_DB_NAME}
-query                 = SELECT domain FROM domain WHERE domain='%s' AND active = '1'
-EOFDOMAINSMAPS
+	### 
+	### INICIO FICHERO /etc/postfix/mysql_virtual_alias_maps.cf 
+	### ------------------------------------------------------------------------------------------------
+	cat > /etc/postfix/mysql_virtual_alias_maps.cf <<-EOF_ALIASMAPS
 	
-	cat > /etc/postfix/mysql_virtual_mailbox_maps.cf <<EOFMAILBOXMAPS
-hosts                 = ${mysqlHost}:${mysqlPort}
-user                  = ${MAIL_DB_USER}
-password              = ${MAIL_DB_PASS}
-dbname                = ${MAIL_DB_NAME}
-query                 = SELECT maildir FROM mailbox WHERE username='%s' AND active = '1'
-EOFMAILBOXMAPS
+	hosts                 = ${mysqlHost}:${mysqlPort}
+	user                  = ${MAIL_DB_USER}
+	password              = ${MAIL_DB_PASS}
+	dbname                = ${MAIL_DB_NAME}
+	query                 = SELECT goto FROM alias WHERE address='%s' AND active = '1'
+	
+	EOF_ALIASMAPS
+	### ------------------------------------------------------------------------------------------------
+	### FIN FICHERO /etc/postfix/mysql_virtual_alias_maps.cf  
+	### 
+
+	### 
+	### INICIO FICHERO /etc/postfix/mysql_virtual_domains_maps.cf 
+	### ------------------------------------------------------------------------------------------------
+	cat > /etc/postfix/mysql_virtual_domains_maps.cf <<-EOF_DOMAINSMAPS
+	
+	hosts                 = ${mysqlHost}:${mysqlPort}
+	user                  = ${MAIL_DB_USER}
+	password              = ${MAIL_DB_PASS}
+	dbname                = ${MAIL_DB_NAME}
+	query                 = SELECT domain FROM domain WHERE domain='%s' AND active = '1'
+	
+	EOF_DOMAINSMAPS
+	### ------------------------------------------------------------------------------------------------
+	### FIN FICHERO /etc/postfix/mysql_virtual_domains_maps.cf  
+	### 
+	
+	### 
+	### INICIO FICHERO /etc/postfix/mysql_virtual_mailbox_maps.cf 
+	### ------------------------------------------------------------------------------------------------
+	cat > /etc/postfix/mysql_virtual_mailbox_maps.cf <<-EOF_MAILBOXMAPS
+	
+	hosts                 = ${mysqlHost}:${mysqlPort}
+	user                  = ${MAIL_DB_USER}
+	password              = ${MAIL_DB_PASS}
+	dbname                = ${MAIL_DB_NAME}
+	query                 = SELECT maildir FROM mailbox WHERE username='%s' AND active = '1'
+	
+	EOF_MAILBOXMAPS
+	### ------------------------------------------------------------------------------------------------
+	### FIN FICHERO /etc/postfix/mysql_virtual_mailbox_maps.cf  
+	### 
 
 	#	
 	chmod 640 /etc/postfix/mysql_*.cf
@@ -371,45 +427,52 @@ EOFMAILBOXMAPS
 	#
 	############
 
-    cat > /etc/rsyslog.conf <<EOFRSYSLOG
-\$LocalHostName postfix
-\$ModLoad imuxsock # provides support for local system logging
-#\$ModLoad imklog   # provides kernel logging support
-#\$ModLoad immark  # provides --MARK-- message capability
-
-# provides UDP syslog reception
-#\$ModLoad imudp
-#\$UDPServerRun 514
-
-# provides TCP syslog reception
-#\$ModLoad imtcp
-#\$InputTCPServerRun 514
-
-# Activar para debug interactivo
-#
-#\$DebugFile /var/log/rsyslogdebug.log
-#\$DebugLevel 2
-
-\$ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat
-
-\$FileOwner root
-\$FileGroup adm
-\$FileCreateMode 0640
-\$DirCreateMode 0755
-\$Umask 0022
-
-#\$WorkDirectory /var/spool/rsyslog
-#\$IncludeConfig /etc/rsyslog.d/*.conf
-
-# Dirección del Host:Puerto agregador de Log's con Fluentd
-#
-*.* @@${fluentdHost}:${fluentdPort}
-
-# Activar para debug interactivo
-#
-#*.* /var/log/syslog
-
-EOFRSYSLOG
+	### 
+	### INICIO FICHERO /etc/rsyslog.conf
+	### ------------------------------------------------------------------------------------------------
+    cat > /etc/rsyslog.conf <<-EOF_RSYSLOG
+    
+	\$LocalHostName postfix
+	\$ModLoad imuxsock # provides support for local system logging
+	#\$ModLoad imklog   # provides kernel logging support
+	#\$ModLoad immark  # provides --MARK-- message capability
+	
+	# provides UDP syslog reception
+	#\$ModLoad imudp
+	#\$UDPServerRun 514
+	
+	# provides TCP syslog reception
+	#\$ModLoad imtcp
+	#\$InputTCPServerRun 514
+	
+	# Activar para debug interactivo
+	#
+	#\$DebugFile /var/log/rsyslogdebug.log
+	#\$DebugLevel 2
+	
+	\$ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat
+	
+	\$FileOwner root
+	\$FileGroup adm
+	\$FileCreateMode 0640
+	\$DirCreateMode 0755
+	\$Umask 0022
+	
+	#\$WorkDirectory /var/spool/rsyslog
+	#\$IncludeConfig /etc/rsyslog.d/*.conf
+	
+	# Dirección del Host:Puerto agregador de Log's con Fluentd
+	#
+	*.* @@${fluentdHost}:${fluentdPort}
+	
+	# Activar para debug interactivo
+	#
+	#*.* /var/log/syslog
+	
+	EOF_RSYSLOG
+	### ------------------------------------------------------------------------------------------------
+	### FIN FICHERO /etc/rsyslog.conf
+	### 
 
 	# Re-Confirmo los permisos de /data/vmail
 	chown -R vmail:vmail /data/vmail
