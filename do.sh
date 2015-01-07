@@ -288,6 +288,8 @@ if [ ${NECESITA_PRIMER_CONFIG} = "si" ] ; then
 	postconf -e smtpd_tls_cert_file="/etc/ssl/certs/postfix.pem"
 	postconf -e smtpd_tls_received_header=yes
 	postconf -e smtpd_tls_security_level = may
+	# forzar tls
+	postconf -e smtpd_tls_auth_only = yes
 	
 	# amavisd-new ( REENVÍA TODO EL MAIL ENTRANTE HACIA EL CHATARRERO !!!!)
 	# Estas tres líneas provocan que cada vez que llega un mail se reenvía al contenedor
