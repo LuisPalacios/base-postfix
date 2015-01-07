@@ -205,6 +205,8 @@ if [ ${NECESITA_PRIMER_CONFIG} = "si" ] ; then
 	#
     # Servidor SMTP en 25,2525. 
     # Nota: Los clientes podrán autenticar por el puerto 25 y 2525, usando STARTTLS (ver main.cf)
+    # Por el 25 podrán recibirse correos (desde otros servidores) sin autenticar, pero por el 
+    # puerto 2525 solo se aceptarán correos si hay autenticación.
     # ==============
     postconf -M smtp/inet="smtp       inet  n       -       n       -       -       smtpd"
     postconf -M 2525/inet="2525       inet  n       -       n       -       -       smtpd"    
@@ -285,6 +287,7 @@ if [ ${NECESITA_PRIMER_CONFIG} = "si" ] ; then
 	postconf -e smtpd_tls_key_file="/etc/ssl/private/postfix.key"
 	postconf -e smtpd_tls_cert_file="/etc/ssl/certs/postfix.pem"
 	postconf -e smtpd_tls_received_header=yes
+	postconf -e smtpd_tls_security_level = may
 	
 	# amavisd-new ( REENVÍA TODO EL MAIL ENTRANTE HACIA EL CHATARRERO !!!!)
 	# Estas tres líneas provocan que cada vez que llega un mail se reenvía al contenedor
