@@ -209,6 +209,7 @@ if [ ${NECESITA_PRIMER_CONFIG} = "si" ] ; then
     # puerto 2525 solo se aceptarán correos si hay autenticación.
     # ==============
     postconf -M smtp/inet="smtp       inet  n       -       n       -       -       smtpd"
+ 	
     postconf -M 2525/inet="2525       inet  n       -       n       -       -       smtpd"    
 	postconf -P 2525/inet/smtpd_sasl_auth_enable=yes
 	postconf -P 2525/inet/smtpd_client_restrictions=permit_sasl_authenticated,reject
@@ -271,6 +272,24 @@ if [ ${NECESITA_PRIMER_CONFIG} = "si" ] ; then
 	postconf -e home_mailbox="Maildir/"
 	postconf -e inet_protocols=ipv4
 	
+	# RBL
+	postconf -e smtpd_client_restrictions="permit_mynetworks, \
+                                           permit_sasl_authenticated, \
+                                           reject_unauth_destination, \
+                                           reject_rbl_client zen.spamhaus.org=127.0.0.10 \
+                                           reject_rbl_client zen.spamhaus.org=127.0.0.11, \
+                                           reject_rbl_client zen.spamhaus.org, \
+                                           reject_rbl_client bl.spamcop.net, \
+                                           reject_rbl_client cbl.abuseat.org, \
+                                           permit"        
+    postconf -e rbl_reply_maps="\${stress?hash:/etc/postfix/rbl_reply_maps}"
+    
+    cat > /etc/postfix/rbl_reply_maps <<-EOF_REPLY_MAPS
+    zen.spamhaus.org=127.0.0.11 521 4.7.1 Service unavailable;
+    \$rbl_class [\$rbl_what] blocked using
+	\$rbl_domain${rbl_reason?; \$rbl_reason}
+	EOF_REPLY_MAPS
+	
 	# SASL
 	postconf -e smtp_sasl_type=cyrus
 	postconf -e smtpd_sasl_auth_enable=yes
@@ -287,9 +306,8 @@ if [ ${NECESITA_PRIMER_CONFIG} = "si" ] ; then
 	postconf -e smtpd_tls_key_file="/etc/ssl/private/postfix.key"
 	postconf -e smtpd_tls_cert_file="/etc/ssl/certs/postfix.pem"
 	postconf -e smtpd_tls_received_header=yes
-	postconf -e smtpd_tls_security_level = may
-	# forzar tls
-	postconf -e smtpd_tls_auth_only = yes
+	postconf -e smtpd_tls_security_level=may
+	postconf -e smtpd_tls_auth_only=yes
 	
 	# amavisd-new ( REENVÍA TODO EL MAIL ENTRANTE HACIA EL CHATARRERO !!!!)
 	# Estas tres líneas provocan que cada vez que llega un mail se reenvía al contenedor
