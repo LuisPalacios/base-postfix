@@ -285,9 +285,9 @@ if [ ${NECESITA_PRIMER_CONFIG} = "si" ] ; then
     postconf -e rbl_reply_maps="\${stress?hash:/etc/postfix/rbl_reply_maps}"
     
     cat > /etc/postfix/rbl_reply_maps <<-EOF_REPLY_MAPS
-    zen.spamhaus.org=127.0.0.11 521 4.7.1 Service unavailable;
-    \$rbl_class [\$rbl_what] blocked using
-	\$rbl_domain${rbl_reason?; \$rbl_reason}
+	zen.spamhaus.org=127.0.0.11 521 4.7.1 Service unavailable;
+	\$rbl_class [\$rbl_what] blocked using
+	\$rbl_domain\${rbl_reason?; \$rbl_reason}
 	EOF_REPLY_MAPS
 	
 	# SASL
