@@ -27,6 +27,35 @@ Luego puedes crear la imagen localmente con el siguiente comando
     $ docker build -t luispa/base-postfix ./
 
 
+# Revisar y personalizar
+
+Es muy importante que revises el fichero **do.sh** para comprobar que la configuración que se realiza es adecuada para tus intereses. 
+
+Un ejemplo son las direcciones que acepto en el el fichero master.cf y main.cf que se configura automáticamente. Acepto todas las IP's de la intranet, me refiero a estas líneas:
+
+	#####################
+    #
+    # postfix / master.cf ((-vvv al final para activar debug, quitar en la versión final))
+    #
+	#####################
+	#
+	:
+	postconf -P 10025/inet/mynetworks="10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16"
+	:
+
+	#####################
+    #
+    # postfix / main.cf 
+    #
+	#####################
+	#
+	:
+	postconf -e mynetworks="10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 127.0.0.0/8"
+	:
+
+Puede darse el caso en el que no te convenga usar estas IP's y si es así te recomiendo que clones el repositorio (punto anterior) y lo adaptes a tus necesidades. 
+
+
 # Pruebas
 
 Para comprobar que el contendor funciona correctametne dejo aquí algunos comandos a modo de ejemplo para hacer troubleshooting.
