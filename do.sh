@@ -245,7 +245,7 @@ if [ ${NECESITA_PRIMER_CONFIG} = "si" ] ; then
 	postconf -P 10025/inet/smtpd_recipient_restrictions="permit_mynetworks,reject"
 	postconf -P 10025/inet/smtpd_data_restrictions="reject_unauth_pipelining"
 	postconf -P 10025/inet/smtpd_restriction_classes=
-	postconf -P 10025/inet/mynetworks="10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16"
+	postconf -P 10025/inet/mynetworks="10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
 	postconf -P 10025/inet/smtpd_error_sleep_time=0
 	postconf -P 10025/inet/smtpd_soft_error_limit=1001
 	postconf -P 10025/inet/smtpd_hard_error_limit=1000
@@ -268,7 +268,7 @@ if [ ${NECESITA_PRIMER_CONFIG} = "si" ] ; then
 	postconf -e myhostname=${SERVICE_MYHOSTNAME}
 	postconf -e mydomain=${SERVICE_MYDOMAIN}
 	postconf -e mydestination="\$myhostname, localhost.\$mydomain, localhost"
-	postconf -e mynetworks="10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 127.0.0.0/8"
+	postconf -e mynetworks="10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,127.0.0.0/8"
 	postconf -e home_mailbox="Maildir/"
 	postconf -e inet_protocols=ipv4
 	
