@@ -55,6 +55,15 @@ Un ejemplo son las direcciones que acepto en el el fichero master.cf y main.cf q
 
 Puede darse el caso en el que no te convenga usar estas IP's y si es así te recomiendo que clones el repositorio (punto anterior) y lo adaptes a tus necesidades. 
 
+### Volumen
+
+Directorio persistente para configurar el Timezone. Crear el directorio /Apps/data/tz y dentro de él crear el fichero timezone. Luego montarlo con -v o con fig.yml
+
+    Montar:
+       "/Apps/data/tz:/config/tz"  
+    Preparar: 
+       $ echo "Europe/Madrid" > /config/tz/timezone
+
 
 # Pruebas
 
